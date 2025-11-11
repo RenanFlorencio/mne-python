@@ -204,8 +204,7 @@ def _save_part(fid, epochs, fmt, n_parts, next_fname, next_idx):
     # The epochs itself
     decal = np.empty(info["nchan"])
     for k in range(info["nchan"]):
-        decal[k] = 1.0 / (info["chs"][k]["cal"] *
-                          info["chs"][k].get("scale", 1.0))
+        decal[k] = 1.0 / (info["chs"][k]["cal"] * info["chs"][k].get("scale", 1.0))
 
     data *= decal[np.newaxis, :, np.newaxis]
 
@@ -214,13 +213,11 @@ def _save_part(fid, epochs, fmt, n_parts, next_fname, next_idx):
     # undo modifications to data
     data /= decal[np.newaxis, :, np.newaxis]
 
-    write_string(fid, FIFF.FIFF_MNE_EPOCHS_DROP_LOG,
-                 json.dumps(epochs.drop_log))
+    write_string(fid, FIFF.FIFF_MNE_EPOCHS_DROP_LOG, json.dumps(epochs.drop_log))
 
     reject_params = _pack_reject_params(epochs)
     if reject_params:
-        write_string(fid, FIFF.FIFF_MNE_EPOCHS_REJECT_FLAT,
-                     json.dumps(reject_params))
+        write_string(fid, FIFF.FIFF_MNE_EPOCHS_REJECT_FLAT, json.dumps(reject_params))
 
     write_int(fid, FIFF.FIFF_MNE_EPOCHS_SELECTION, epochs.selection)
 
@@ -351,8 +348,7 @@ def _handle_event_repeated(events, event_id, event_repeated, selection, drop_log
             "Multiple event values for single event times found. "
             "Creating new event value to reflect simultaneous events."
         )
-        new_events, event_id, new_selection = _merge_events(
-            events, event_id, selection)
+        new_events, event_id, new_selection = _merge_events(events, event_id, selection)
         drop_ev_idxs = np.setdiff1d(selection, new_selection)
         for idx in drop_ev_idxs:
             drop_log[idx] = drop_log[idx] + ("MERGE DUPLICATE",)
@@ -612,8 +608,7 @@ class BaseEpochs(
         # Handle times
         sfreq = float(self.info["sfreq"])
         start_idx = int(round(tmin * sfreq))
-        self._raw_times = np.arange(
-            start_idx, int(round(tmax * sfreq)) + 1) / sfreq
+        self._raw_times = np.arange(start_idx, int(round(tmax * sfreq)) + 1) / sfreq
         self._set_times(self._raw_times)
 
         # check reject_tmin and reject_tmax
@@ -676,8 +671,7 @@ class BaseEpochs(
         else:
             self._do_delayed_proj = False
         activate = False if self._do_delayed_proj else proj
-        self._projector, self.info = setup_proj(
-            self.info, False, activate=activate)
+        self._projector, self.info = setup_proj(self.info, False, activate=activate)
         if preload_at_end:
             assert self._data is None
             assert self.preload is False
@@ -770,8 +764,7 @@ class BaseEpochs(
 
         .. versionadded:: 0.10.0
         """
-        baseline = _check_baseline(
-            baseline, times=self.times, sfreq=self.info["sfreq"])
+        baseline = _check_baseline(baseline, times=self.times, sfreq=self.info["sfreq"])
 
         if self.preload:
             if self.baseline is not None and baseline is None:
@@ -802,8 +795,7 @@ class BaseEpochs(
             _validate_type(rej, dict, kind)
             bads = set(rej.keys()) - set(idx.keys())
             if len(bads) > 0:
-                raise KeyError(
-                    f"Unknown channel types found in {kind}: {bads}")
+                raise KeyError(f"Unknown channel types found in {kind}: {bads}")
 
         for key in idx.keys():
             # don't throw an error if rejection/flat would do nothing
@@ -1019,8 +1011,7 @@ class BaseEpochs(
             evoked = self.average(picks)
 
         # find the indices of the channels to use
-        picks = pick_channels(
-            evoked.ch_names, include=self.ch_names, ordered=False)
+        picks = pick_channels(evoked.ch_names, include=self.ch_names, ordered=False)
 
         # make sure the omitted channels are not data channels
         if len(picks) < len(self.ch_names):
@@ -1118,8 +1109,7 @@ class BaseEpochs(
         if by_event_type:
             evokeds = list()
             for event_type in self.event_id.keys():
-                ev = self[event_type]._compute_aggregate(
-                    picks=picks, mode=method)
+                ev = self[event_type]._compute_aggregate(picks=picks, mode=method)
                 ev.comment = event_type
                 evokeds.append(ev)
         else:
@@ -1725,8 +1715,7 @@ class BaseEpochs(
             for ii, idx in enumerate(use_idx):
                 # faster to pre-allocate memory here
                 epoch_noproj = self._get_epoch_from_raw(idx)
-                epoch_noproj = self._detrend_offset_decim(
-                    epoch_noproj, detrend_picks)
+                epoch_noproj = self._detrend_offset_decim(epoch_noproj, detrend_picks)
                 if self._do_delayed_proj:
                     epoch_out = epoch_noproj
                 else:
@@ -1762,8 +1751,7 @@ class BaseEpochs(
                     epoch = self._project_epoch(epoch_noproj)
 
                 epoch_out = epoch_noproj if self._do_delayed_proj else epoch
-                is_good, bad_tuple = self._is_good_epoch(
-                    epoch, verbose=verbose)
+                is_good, bad_tuple = self._is_good_epoch(epoch, verbose=verbose)
                 if not is_good:
                     assert isinstance(bad_tuple, tuple)
                     assert all(isinstance(x, str) for x in bad_tuple)
@@ -1934,7 +1922,13 @@ class BaseEpochs(
             when possible when ``copy=False``.
         """
         return self._get_data(
-            picks=picks, item=item, units=units, tmin=tmin, tmax=tmax, copy=copy, exclude=exclude
+            picks=picks,
+            item=item,
+            units=units,
+            tmin=tmin,
+            tmax=tmax,
+            copy=copy,
+            exclude=exclude,
         )
 
     @verbose
@@ -2233,8 +2227,7 @@ class BaseEpochs(
         Bad epochs will be dropped before saving the epochs to disk.
         """
         check_fname(
-            fname, "epochs", ("-epo.fif", "-epo.fif.gz",
-                              "_epo.fif", "_epo.fif.gz")
+            fname, "epochs", ("-epo.fif", "-epo.fif.gz", "_epo.fif", "_epo.fif.gz")
         )
 
         # check for file existence and expand `~` if present
@@ -2312,8 +2305,7 @@ class BaseEpochs(
             )
 
         # This is like max(int(ceil(total_size / split_size)), 1) but cleaner
-        n_parts = max((total_size - 1) //
-                      (split_size_bytes - over_size) + 1, 1)
+        n_parts = max((total_size - 1) // (split_size_bytes - over_size) + 1, 1)
         assert n_parts >= 1, n_parts
         if n_parts > 1:
             logger.info(f"Splitting into {n_parts} parts")
@@ -2339,8 +2331,7 @@ class BaseEpochs(
             # avoid missing event_ids in splits
             this_epochs.event_id = self.event_id
 
-            _save_split(this_epochs, split_fnames,
-                        part_idx, n_parts, fmt, overwrite)
+            _save_split(this_epochs, split_fnames, part_idx, n_parts, fmt, overwrite)
         return split_fnames
 
     @verbose
@@ -2659,8 +2650,7 @@ class BaseEpochs(
             average = True
         if average:
             # augment `output` value for use by tfr_array_* functions
-            _check_option("output", output, ("power",),
-                          extra=" when average=True")
+            _check_option("output", output, ("power",), extra=" when average=True")
             method_kw["output"] = "avg_power_itc" if return_itc else "avg_power"
         else:
             msg = (
@@ -2668,11 +2658,9 @@ class BaseEpochs(
                 "({} requires averaging over epochs)."
             )
             if return_itc:
-                raise ValueError(msg.format(
-                    "return_itc=True", "computing ITC"))
+                raise ValueError(msg.format("return_itc=True", "computing ITC"))
             if method == "stockwell":
-                raise ValueError(msg.format(
-                    'method="stockwell"', "Stockwell method"))
+                raise ValueError(msg.format('method="stockwell"', "Stockwell method"))
             # `average` and `return_itc` both False, so "phase" and "complex" are OK
             _check_option("output", output, ("power", "phase", "complex"))
             method_kw["output"] = output
@@ -2881,8 +2869,7 @@ class BaseEpochs(
         # prepare extra columns / multiindex
         mindex = list()
         times = np.tile(times, n_epochs)
-        times = _convert_times(
-            times, time_format, meas_date=self.info["meas_date"])
+        times = _convert_times(times, time_format, meas_date=self.info["meas_date"])
         mindex.append(("time", times))
         rev_event_id = {v: k for k, v in self.event_id.items()}
         conditions = [rev_event_id[k] for k in self.events[:, 2]]
@@ -3128,16 +3115,11 @@ def make_metadata(
     _validate_type(events, types=("array-like",), item_name="events")
     _validate_type(event_id, types=(dict,), item_name="event_id")
     _validate_type(sfreq, types=("numeric",), item_name="sfreq")
-    _validate_type(tmin, types=(
-        "numeric", str, "array-like", None), item_name="tmin")
-    _validate_type(tmax, types=(
-        "numeric", str, "array-like", None), item_name="tmax")
-    _validate_type(row_events, types=(
-        None, str, "array-like"), item_name="row_events")
-    _validate_type(keep_first, types=(
-        None, str, "array-like"), item_name="keep_first")
-    _validate_type(keep_last, types=(
-        None, str, "array-like"), item_name="keep_last")
+    _validate_type(tmin, types=("numeric", str, "array-like", None), item_name="tmin")
+    _validate_type(tmax, types=("numeric", str, "array-like", None), item_name="tmax")
+    _validate_type(row_events, types=(None, str, "array-like"), item_name="row_events")
+    _validate_type(keep_first, types=(None, str, "array-like"), item_name="keep_first")
+    _validate_type(keep_last, types=(None, str, "array-like"), item_name="keep_last")
 
     if not event_id:
         raise ValueError("event_id dictionary must contain at least one entry")
@@ -3258,8 +3240,7 @@ def make_metadata(
 
     # Event times
     start_idx = 1
-    stop_idx = start_idx + len(event_id.keys()) + \
-        len(keep_first_cols + keep_last_cols)
+    stop_idx = start_idx + len(event_id.keys()) + len(keep_first_cols + keep_last_cols)
     metadata.iloc[:, start_idx:stop_idx] = np.nan
 
     # keep_first and keep_last names
@@ -3401,10 +3382,8 @@ def make_metadata(
         event_id_timelocked = {
             name: val for name, val in event_id.items() if name in row_events
         }
-        events = events[np.isin(events[:, 2], list(
-            event_id_timelocked.values()))]
-        metadata = metadata.loc[metadata["event_name"].isin(
-            event_id_timelocked)]
+        events = events[np.isin(events[:, 2], list(event_id_timelocked.values()))]
+        metadata = metadata.loc[metadata["event_name"].isin(event_id_timelocked)]
         assert len(events) == len(metadata)
         event_id = event_id_timelocked
 
@@ -3441,8 +3420,7 @@ def _events_from_annotations(raw, events, event_id, annotations, on_missing):
         event_id = set(event_id) & set(event_id_tmp)
         event_id = {my_id: event_id_tmp[my_id] for my_id in event_id}
         # remove any non-selected annotations
-        annotations.delete(
-            ~np.isin(raw.annotations.description, list(event_id)))
+        annotations.delete(~np.isin(raw.annotations.description, list(event_id)))
     return events, event_id, annotations
 
 
@@ -3785,8 +3763,7 @@ class EpochsArray(BaseEpochs):
             )
 
         if len(info["ch_names"]) != data.shape[1]:
-            raise ValueError(
-                "Info and data must have same number of channels.")
+            raise ValueError("Info and data must have same number of channels.")
         if events is None:
             n_epochs = len(data)
             events = _gen_events(n_epochs)
@@ -3820,8 +3797,7 @@ class EpochsArray(BaseEpochs):
             len(events)
             != np.isin(self.events[:, 2], list(self.event_id.values())).sum()
         ):
-            raise ValueError(
-                "The events must only contain event numbers from event_id")
+            raise ValueError("The events must only contain event numbers from event_id")
         detrend_picks = self._detrend_picks
         for e in self._data:
             # This is safe without assignment b/c there is no decim
@@ -3939,7 +3915,7 @@ def _get_drop_indices(sample_nums, method, random_state):
             mask = _minimize_time_diff(small_epoch_indices, event)
         elif method == "truncate":
             mask = np.ones(event.size, dtype=bool)
-            mask[small_epoch_indices.size:] = False
+            mask[small_epoch_indices.size :] = False
         elif method == "random":
             rng = check_random_state(random_state)
             mask = np.zeros(event.size, dtype=bool)
@@ -3965,8 +3941,7 @@ def _minimize_time_diff(t_shorter, t_longer):
     x1 = np.arange(len(t_shorter))
     # The first set of keep masks to test
     kwargs = dict(copy=False, bounds_error=False, assume_sorted=True)
-    shorter_interp = interp1d(
-        x1, t_shorter, fill_value=t_shorter[-1], **kwargs)
+    shorter_interp = interp1d(x1, t_shorter, fill_value=t_shorter[-1], **kwargs)
     for ii in range(len(t_longer) - len(t_shorter)):
         scores.fill(np.inf)
         # set up the keep masks to test, eliminating any rows that are already
@@ -4007,8 +3982,7 @@ def _is_good(
     bad_tuple = tuple()
     has_printed = False
     checkable = np.ones(len(ch_names), dtype=bool)
-    checkable[np.array([c in ignore_chs for c in ch_names],
-                       dtype=bool)] = False
+    checkable[np.array([c in ignore_chs for c in ch_names], dtype=bool)] = False
 
     for refl, f, t in zip([reject, flat], [np.greater, np.less], ["", "flat"]):
         if refl is not None:
@@ -4028,11 +4002,9 @@ def _is_good(
                                 "Function criterion must return a tuple of length 2"
                             )
                         cri_truth, reasons = result
+                        _validate_type(cri_truth, (bool, np.bool_), cri_truth, "bool")
                         _validate_type(
-                            cri_truth, (bool, np.bool_), cri_truth, "bool")
-                        _validate_type(
-                            reasons, (str, list,
-                                      tuple), reasons, "str, list, or tuple"
+                            reasons, (str, list, tuple), reasons, "str, list, or tuple"
                         )
                         idx_deltas = np.where(np.logical_and(cri_truth, checkable_idx))[
                             0
@@ -4327,8 +4299,7 @@ class EpochsFIF(BaseEpochs):
                 filetype="epochs",
                 endings=("-epo.fif", "-epo.fif.gz", "_epo.fif", "_epo.fif.gz"),
             )
-            fname = _check_fname(
-                fname=fname, must_exist=True, overwrite="read")
+            fname = _check_fname(fname=fname, must_exist=True, overwrite="read")
         elif not preload:
             raise ValueError("preload must be used with file-like objects")
 
@@ -4556,8 +4527,7 @@ def _concatenate_epochs(
 ):
     """Auxiliary function for concatenating epochs."""
     if not isinstance(epochs_list, list | tuple):
-        raise TypeError(
-            f"epochs_list must be a list or tuple, got {type(epochs_list)}")
+        raise TypeError(f"epochs_list must be a list or tuple, got {type(epochs_list)}")
 
     # to make warning messages only occur once during concatenation
     warned = False
@@ -4607,8 +4577,7 @@ def _concatenate_epochs(
     events_overflow = False
     warned = False
     for ii, epochs in enumerate(epochs_list[1:], 1):
-        _ensure_infos_match(epochs.info, info,
-                            f"epochs[{ii}]", on_mismatch=on_mismatch)
+        _ensure_infos_match(epochs.info, info, f"epochs[{ii}]", on_mismatch=on_mismatch)
         if not np.allclose(epochs.times, epochs_list[0].times):
             raise ValueError("Epochs must have same times")
 
@@ -4631,8 +4600,7 @@ def _concatenate_epochs(
                     'for all concatenated epochs. Key "{}" maps to {} in '
                     "some epochs and to {} in others."
                 )
-                raise ValueError(msg.format(
-                    key, event_id[key], epochs.event_id[key]))
+                raise ValueError(msg.format(key, event_id[key], epochs.event_id[key]))
 
         if with_data:
             epochs.drop_bad()
@@ -4870,8 +4838,7 @@ def average_movements(
     from .chpi import head_pos_to_trans_rot_t
 
     if not isinstance(epochs, BaseEpochs):
-        raise TypeError(
-            f"epochs must be an instance of Epochs, not {type(epochs)}")
+        raise TypeError(f"epochs must be an instance of Epochs, not {type(epochs)}")
     orig_sfreq = epochs.info["sfreq"] if orig_sfreq is None else orig_sfreq
     orig_sfreq = float(orig_sfreq)
     if isinstance(head_pos, np.ndarray):
@@ -4909,8 +4876,7 @@ def average_movements(
     S_decomp = 0.0  # this will end up being a weighted average
     last_trans = None
     decomp_coil_scale = coil_scale[good_mask]
-    exp = dict(int_order=int_order, ext_order=ext_order,
-               head_frame=True, origin=origin)
+    exp = dict(int_order=int_order, ext_order=ext_order, head_frame=True, origin=origin)
     n_in = _get_n_moments(int_order)
     for ei, epoch in enumerate(epochs):
         event_time = epochs.events[epochs._current - 1, 0] / orig_sfreq
@@ -4920,8 +4886,7 @@ def average_movements(
         else:
             use_idx = use_idx[-1]
             trans = np.vstack(
-                [np.hstack([rot[use_idx], trn[[use_idx]].T]),
-                 [[0.0, 0.0, 0.0, 1.0]]]
+                [np.hstack([rot[use_idx], trn[[use_idx]].T]), [[0.0, 0.0, 0.0, 1.0]]]
             )
         loc_str = ", ".join(f"{tr:0.1f}" for tr in (trans[:3, 3] * 1000))
         if last_trans is None or not np.allclose(last_trans, trans):
@@ -4931,13 +4896,11 @@ def average_movements(
             reuse = False
             last_trans = trans
         else:
-            logger.info(
-                f"    Processing epoch {ei + 1} (device location: same)")
+            logger.info(f"    Processing epoch {ei + 1} (device location: same)")
             reuse = True
         epoch = epoch.copy()  # because we operate inplace
         if not reuse:
-            S = _trans_sss_basis(exp, all_coils, trans,
-                                 coil_scale=decomp_coil_scale)
+            S = _trans_sss_basis(exp, all_coils, trans, coil_scale=decomp_coil_scale)
             # Get the weight from the un-regularized version (eq. 44)
             weight = np.linalg.norm(S[:, :n_in])
             # XXX Eventually we could do cross-talk and fine-cal here
@@ -5032,8 +4995,7 @@ def make_fixed_length_epochs(
     -----
     .. versionadded:: 0.20
     """
-    events = make_fixed_length_events(
-        raw, id=id, duration=duration, overlap=overlap)
+    events = make_fixed_length_events(raw, id=id, duration=duration, overlap=overlap)
     delta = 1.0 / raw.info["sfreq"]
     return Epochs(
         raw,
