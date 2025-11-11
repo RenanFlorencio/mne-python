@@ -247,18 +247,21 @@ class BaseRaw(
         self._raw_extras = list(dict() if r is None else r for r in raw_extras)
         for r in self._raw_extras:
             r["orig_nchan"] = info["nchan"]
-        self._read_picks = [np.arange(info["nchan"]) for _ in range(len(raw_extras))]
+        self._read_picks = [np.arange(info["nchan"])
+                            for _ in range(len(raw_extras))]
         # deal with compensation (only relevant for CTF data, either CTF
         # reader or MNE-C converted CTF->FIF files)
         self._read_comp_grade = self.compensation_grade  # read property
         if self._read_comp_grade is not None and len(info["comps"]):
-            logger.info("Current compensation grade : %d", self._read_comp_grade)
+            logger.info("Current compensation grade : %d",
+                        self._read_comp_grade)
         self._comp = None
         if filenames is None:
             filenames = [None] * len(first_samps)
         self.filenames = list(filenames)
         _validate_type(orig_format, str, "orig_format")
-        _check_option("orig_format", orig_format, ("double", "single", "int", "short"))
+        _check_option("orig_format", orig_format,
+                      ("double", "single", "int", "short"))
         self.orig_format = orig_format
         # Sanity check and set original units, if provided by the reader:
 
@@ -351,7 +354,8 @@ class BaseRaw(
                     [np.arange(0, len(self.times), 10000), [len(self.times)]]
                 )
                 for start, stop in zip(lims[:-1], lims[1:]):
-                    self._data[:, start:stop] = np.dot(comp, self._data[:, start:stop])
+                    self._data[:, start:stop] = np.dot(
+                        comp, self._data[:, start:stop])
             else:
                 self._comp = comp  # store it for later use
         return self
@@ -420,10 +424,12 @@ class BaseRaw(
             data = _allocate_data(data_buffer, data_shape, dtype)
 
         # deal with having multiple files accessed by the raw object
-        cumul_lens = np.concatenate(([0], np.array(self._raw_lengths, dtype="int")))
+        cumul_lens = np.concatenate(
+            ([0], np.array(self._raw_lengths, dtype="int")))
         cumul_lens = np.cumsum(cumul_lens)
         files_used = np.logical_and(
-            np.less(start, cumul_lens[1:]), np.greater_equal(stop - 1, cumul_lens[:-1])
+            np.less(start, cumul_lens[1:]), np.greater_equal(
+                stop - 1, cumul_lens[:-1])
         )
 
         # set up cals and mult (cals, compensation, and projector)
@@ -695,7 +701,8 @@ class BaseRaw(
             value = list(value)
         for k, elt in enumerate(value):
             if elt is not None:
-                value[k] = _check_fname(elt, overwrite="read", must_exist=False)
+                value[k] = _check_fname(
+                    elt, overwrite="read", must_exist=False)
                 if not value[k].exists():
                     # check existence separately from _check_fname since some
                     # fileformats use directories instead of files and '_check_fname'
@@ -753,7 +760,8 @@ class BaseRaw(
             else:
                 tmin = meas_date + timedelta(0, self._first_time)
                 tmax = tmin + timedelta(seconds=self.times[-1] + delta)
-                new_annotations.crop(tmin=tmin, tmax=tmax, emit_warning=emit_warning)
+                new_annotations.crop(tmin=tmin, tmax=tmax,
+                                     emit_warning=emit_warning)
                 new_annotations.onset -= (
                     meas_date - new_annotations.orig_time
                 ).total_seconds()
@@ -801,7 +809,8 @@ class BaseRaw(
 
         if isinstance(item[1], slice):
             time_slice = item[1]
-            start, stop, step = (time_slice.start, time_slice.stop, time_slice.step)
+            start, stop, step = (
+                time_slice.start, time_slice.stop, time_slice.step)
         else:
             item1 = item[1]
             # Let's do automated type conversion to integer here
@@ -902,6 +911,7 @@ class BaseRaw(
         *,
         tmin=None,
         tmax=None,
+        exclude=(),
         verbose=None,
     ):
         """Get data in the given range.
@@ -946,12 +956,13 @@ class BaseRaw(
         .. versionadded:: 0.14.0
         """
         # validate types
-        _validate_type(start, types=("int-like"), item_name="start", type_name="int")
+        _validate_type(start, types=("int-like"),
+                       item_name="start", type_name="int")
         _validate_type(
             stop, types=("int-like", None), item_name="stop", type_name="int, None"
         )
 
-        picks = _picks_to_idx(self.info, picks, "all", exclude=())
+        picks = _picks_to_idx(self.info, picks, "all", exclude=exclude)
 
         # Get channel factors for conversion into specified unit
         # (vector of ones if no conversion needed)
@@ -986,7 +997,8 @@ class BaseRaw(
                 getitem *= ch_factors[:, np.newaxis]
             return getitem
         _check_option(
-            "reject_by_annotation", reject_by_annotation.lower(), ["omit", "nan"]
+            "reject_by_annotation", reject_by_annotation.lower(), [
+                "omit", "nan"]
         )
         onsets, ends = _annotations_starts_stops(self, ["BAD"])
         keep = (onsets < stop) & (ends > start)
@@ -1004,7 +1016,7 @@ class BaseRaw(
         for onset, end in zip(onsets, ends):
             if onset >= end:
                 continue
-            used[onset - start : end - start] = False
+            used[onset - start: end - start] = False
         used = np.concatenate([[False], used, [False]])
         starts = np.where(~used[:-1] & used[1:])[0] + start
         stops = np.where(used[:-1] & ~used[1:])[0] + start
@@ -1274,9 +1286,11 @@ class BaseRaw(
         fs = float(self.info["sfreq"])
         picks = _picks_to_idx(self.info, picks, exclude=(), none="data_or_ica")
         _check_preload(self, "raw.notch_filter")
-        onsets, ends = _annotations_starts_stops(self, skip_by_annotation, invert=True)
+        onsets, ends = _annotations_starts_stops(
+            self, skip_by_annotation, invert=True)
         logger.info(
-            "Filtering raw data in %d contiguous segment%s", len(onsets), _pl(onsets)
+            "Filtering raw data in %d contiguous segment%s", len(
+                onsets), _pl(onsets)
         )
         for si, (start, stop) in enumerate(zip(onsets, ends)):
             notch_filter(
@@ -1432,11 +1446,12 @@ class BaseRaw(
         ratio, n_news = ratio[0], np.array(n_news, int)
         new_offsets = np.cumsum([0] + list(n_news))
         if self.preload:
-            new_data = np.empty((len(self.ch_names), new_offsets[-1]), self._data.dtype)
+            new_data = np.empty(
+                (len(self.ch_names), new_offsets[-1]), self._data.dtype)
         for ri, (n_orig, n_new) in enumerate(zip(self._raw_lengths, n_news)):
             this_sl = slice(new_offsets[ri], new_offsets[ri + 1])
             if self.preload:
-                data_chunk = self._data[:, offsets[ri] : offsets[ri + 1]]
+                data_chunk = self._data[:, offsets[ri]: offsets[ri + 1]]
                 new_data[:, this_sl] = resample(data_chunk, **kwargs)
                 # In empirical testing, it was faster to resample all channels
                 # (above) and then replace the stim channels than it was to
@@ -1453,7 +1468,8 @@ class BaseRaw(
                     )[0]
                     if ci == 0 and ri == 0:
                         new_data = np.empty(
-                            (len(self.ch_names), new_offsets[-1]), data_chunk.dtype
+                            (len(self.ch_names),
+                             new_offsets[-1]), data_chunk.dtype
                         )
                     if ci in stim_picks:
                         resamp = _resample_stim_channels(
@@ -1615,10 +1631,12 @@ class BaseRaw(
                 include_tmax=include_tmax,
             )
         )[0][[0, -1]]
-        cumul_lens = np.concatenate(([0], np.array(self._raw_lengths, dtype="int")))
+        cumul_lens = np.concatenate(
+            ([0], np.array(self._raw_lengths, dtype="int")))
         cumul_lens = np.cumsum(cumul_lens)
         keepers = np.logical_and(
-            np.less(smin, cumul_lens[1:]), np.greater_equal(smax, cumul_lens[:-1])
+            np.less(smin, cumul_lens[1:]), np.greater_equal(
+                smax, cumul_lens[:-1])
         )
         keepers = np.where(keepers)[0]
         # if we drop file(s) from the beginning, we need to keep track of
@@ -1630,12 +1648,13 @@ class BaseRaw(
         self._last_samps = np.atleast_1d(self._last_samps[keepers])
         self._last_samps[-1] -= cumul_lens[keepers[-1] + 1] - 1 - smax
         self._read_picks = [self._read_picks[ri] for ri in keepers]
-        assert all(len(r) == len(self._read_picks[0]) for r in self._read_picks)
+        assert all(len(r) == len(self._read_picks[0])
+                   for r in self._read_picks)
         self._raw_extras = [self._raw_extras[ri] for ri in keepers]
         self.filenames = [self.filenames[ri] for ri in keepers]
         if self.preload:
             # slice and copy to avoid the reference to large array
-            self._data = self._data[:, smin : smax + 1].copy()
+            self._data = self._data[:, smin: smax + 1].copy()
 
         annotations = self.annotations
         # now call setter to filter out annotations outside of interval
@@ -1836,7 +1855,8 @@ class BaseRaw(
         _check_option("split_naming", split_naming, ("neuromag", "bids"))
 
         cfg = _RawFidWriterCfg(buffer_size, split_size, drop_small_buffer, fmt)
-        raw_fid_writer = _RawFidWriter(self, info, picks, projector, start, stop, cfg)
+        raw_fid_writer = _RawFidWriter(
+            self, info, picks, projector, start, stop, cfg)
         filenames = _write_raw(raw_fid_writer, fname, split_naming, overwrite)
         return filenames
 
@@ -1898,7 +1918,8 @@ class BaseRaw(
             stop = self.time_as_index(float(tmax), use_rounding=True)[0] + 1
         stop = min(stop, self.last_samp - self.first_samp + 1)
         if stop <= start or stop <= 0:
-            raise ValueError(f"tmin ({tmin}) and tmax ({tmax}) yielded no samples")
+            raise ValueError(
+                f"tmin ({tmin}) and tmax ({tmax}) yielded no samples")
         return start, stop
 
     @copy_function_doc_to_method_doc(plot_raw)
@@ -2121,15 +2142,15 @@ class BaseRaw(
 
             # allocate the buffer
             _data = _allocate_data(preload, (nchan, nsamp), this_data.dtype)
-            _data[:, 0 : c_ns[0]] = this_data
+            _data[:, 0: c_ns[0]] = this_data
 
             for ri in range(len(raws)):
                 if not raws[ri].preload:
                     # read the data directly into the buffer
-                    data_buffer = _data[:, c_ns[ri] : c_ns[ri + 1]]
+                    data_buffer = _data[:, c_ns[ri]: c_ns[ri + 1]]
                     raws[ri]._read_segment(data_buffer=data_buffer)
                 else:
-                    _data[:, c_ns[ri] : c_ns[ri + 1]] = raws[ri]._data
+                    _data[:, c_ns[ri]: c_ns[ri + 1]] = raws[ri]._data
             self._data = _data
             self.preload = True
 
@@ -2480,7 +2501,8 @@ class BaseRaw(
         mindex.append(("time", times))
         # build DataFrame
         df = _build_data_frame(
-            self, data, picks, long_format, mindex, index, default_index=["time"]
+            self, data, picks, long_format, mindex, index, default_index=[
+                "time"]
         )
         return df
 
@@ -2627,7 +2649,8 @@ def _get_ch_factors(inst, units, picks_idxs):
             # Get the scaling factors
             scaling = _get_scaling(ch_type, ch_unit)
             if scaling != 1:
-                indices = [i_ch for i_ch, ch in enumerate(ch_types) if ch == ch_type]
+                indices = [i_ch for i_ch, ch in enumerate(
+                    ch_types) if ch == ch_type]
                 ch_factors[indices] *= scaling
 
     return ch_factors
@@ -2783,7 +2806,8 @@ def _write_raw(raw_fid_writer, fpath, split_naming, overwrite):
 
         logger.info(f"Writing {use_fpath}")
         with start_and_end_file(use_fpath) as fid, reserved_ctx:
-            is_next_split = raw_fid_writer.write(fid, part_idx, prev_fname, next_fname)
+            is_next_split = raw_fid_writer.write(
+                fid, part_idx, prev_fname, next_fname)
             logger.info(f"Closing {use_fpath}")
         if bids_special_behavior and is_next_split:
             logger.info(f"Renaming BIDS split file {fpath.name}")
@@ -2794,7 +2818,8 @@ def _write_raw(raw_fid_writer, fpath, split_naming, overwrite):
             output_fnames.append(use_fpath)
         prev_fname = use_fpath
     else:
-        raise RuntimeError(f"Exceeded maximum number of splits ({MAX_N_SPLITS}).")
+        raise RuntimeError(
+            f"Exceeded maximum number of splits ({MAX_N_SPLITS}).")
 
     logger.info("[done]")
     return output_fnames
@@ -2845,7 +2870,8 @@ class _RawFidWriter:
         self.info = pick_info(info, sel=self.picks, copy=True)
         for k in range(self.info["nchan"]):
             #   Scan numbers may have been messed up
-            self.info["chs"][k]["scanno"] = k + 1  # scanno starts at 1 in FIF format
+            # scanno starts at 1 in FIF format
+            self.info["chs"][k]["scanno"] = k + 1
             if cfg.reset_range:
                 self.info["chs"][k]["range"] = 1.0
         self.projector = projector

@@ -230,7 +230,7 @@ class Evoked(
         self._data = data
 
     @fill_doc
-    def get_data(self, picks=None, units=None, tmin=None, tmax=None):
+    def get_data(self, picks=None, units=None, tmin=None, tmax=None, exclude=()):
         """Get evoked data as 2D array.
 
         Parameters
@@ -254,7 +254,7 @@ class Evoked(
         # Avoid circular import
         from .io.base import _get_ch_factors
 
-        picks = _picks_to_idx(self.info, picks, "all", exclude=())
+        picks = _picks_to_idx(self.info, picks, "all", exclude=exclude)
 
         start, stop = self._handle_tmin_tmax(tmin, tmax)
 
@@ -384,7 +384,8 @@ class Evoked(
 
         .. versionadded:: 0.13.0
         """
-        baseline = _check_baseline(baseline, times=self.times, sfreq=self.info["sfreq"])
+        baseline = _check_baseline(
+            baseline, times=self.times, sfreq=self.info["sfreq"])
         if self.baseline is not None and baseline is None:
             raise ValueError(
                 "The data has already been baseline-corrected. "
@@ -1110,7 +1111,8 @@ class Evoked(
             strict=strict,
         )
 
-        out = (ch_names[ch_idx], time_idx if time_as_index else self.times[time_idx])
+        out = (ch_names[ch_idx],
+               time_idx if time_as_index else self.times[time_idx])
 
         if return_amplitude:
             out += (max_amp,)
@@ -1392,11 +1394,13 @@ class Evoked(
         data = _scale_dataframe_data(self, data, picks, scalings)
         # prepare extra columns / multiindex
         mindex = list()
-        times = _convert_times(times, time_format, meas_date=self.info["meas_date"])
+        times = _convert_times(
+            times, time_format, meas_date=self.info["meas_date"])
         mindex.append(("time", times))
         # build DataFrame
         df = _build_data_frame(
-            self, data, picks, long_format, mindex, index, default_index=["time"]
+            self, data, picks, long_format, mindex, index, default_index=[
+                "time"]
         )
         return df
 
@@ -1474,7 +1478,8 @@ class EvokedArray(Evoked):
         self.first = int(round(tmin * info["sfreq"]))
         self.last = self.first + np.shape(data)[-1] - 1
         self._set_times(
-            np.arange(self.first, self.last + 1, dtype=np.float64) / info["sfreq"]
+            np.arange(self.first, self.last + 1,
+                      dtype=np.float64) / info["sfreq"]
         )
         self._raw_times = self.times.copy()
         self._decim = 1
@@ -1557,14 +1562,16 @@ def _check_evokeds_ch_names_times(all_evoked):
     for ii, ev in enumerate(all_evoked[1:]):
         if ev.ch_names != ch_names:
             if set(ev.ch_names) != set(ch_names):
-                raise ValueError(f"{evoked} and {ev} do not contain the same channels.")
+                raise ValueError(
+                    f"{evoked} and {ev} do not contain the same channels.")
             else:
                 warn("Order of channels differs, reordering channels ...")
                 ev = ev.copy()
                 ev.reorder_channels(ch_names)
                 all_evoked[ii + 1] = ev
         if not np.max(np.abs(ev.times - evoked.times)) < 1e-7:
-            raise ValueError(f"{evoked} and {ev} do not contain the same time instants")
+            raise ValueError(
+                f"{evoked} and {ev} do not contain the same time instants")
     return all_evoked
 
 
@@ -1726,7 +1733,8 @@ def read_evokeds(
         reading.
     """
     fname = _check_fname(fname, overwrite="read", must_exist=True)
-    check_fname(fname, "evoked", ("-ave.fif", "-ave.fif.gz", "_ave.fif", "_ave.fif.gz"))
+    check_fname(fname, "evoked", ("-ave.fif",
+                "-ave.fif.gz", "_ave.fif", "_ave.fif.gz"))
     logger.info(f"Reading {fname} ...")
     return_list = True
     if condition is None:
@@ -1786,7 +1794,8 @@ def _read_evoked(fname, condition=None, kind="average", allow_maxshield=False):
             if kind not in _aspect_dict.keys():
                 raise ValueError('kind must be "average" or "standard_error"')
 
-            comments, aspect_kinds, t = _get_entries(fid, evoked_node, allow_maxshield)
+            comments, aspect_kinds, t = _get_entries(
+                fid, evoked_node, allow_maxshield)
             goods = np.isin(comments, [condition]) & np.isin(
                 aspect_kinds, [_aspect_dict[kind]]
             )
@@ -1799,7 +1808,8 @@ def _read_evoked(fname, condition=None, kind="average", allow_maxshield=False):
             condition = found_cond[0]
         elif condition is None:
             if len(evoked_node) > 1:
-                _, _, conditions = _get_entries(fid, evoked_node, allow_maxshield)
+                _, _, conditions = _get_entries(
+                    fid, evoked_node, allow_maxshield)
                 raise TypeError(
                     "Evoked file has more than one condition, the condition parameters "
                     f"must be specified from:\n{conditions}"
@@ -1814,7 +1824,8 @@ def _read_evoked(fname, condition=None, kind="average", allow_maxshield=False):
 
         # Identify the aspects
         with info._unlock():
-            my_aspect, info["maxshield"] = _get_aspect(my_evoked, allow_maxshield)
+            my_aspect, info["maxshield"] = _get_aspect(
+                my_evoked, allow_maxshield)
 
         # Now find the data in the evoked block
         nchan = 0
@@ -2001,7 +2012,8 @@ def _write_evokeds(fname, evoked, check=True, *, on_mismatch="raise", overwrite=
     fname = _check_fname(fname=fname, overwrite=overwrite)
     if check:
         check_fname(
-            fname, "evoked", ("-ave.fif", "-ave.fif.gz", "_ave.fif", "_ave.fif.gz")
+            fname, "evoked", ("-ave.fif", "-ave.fif.gz",
+                              "_ave.fif", "_ave.fif.gz")
         )
 
     if not isinstance(evoked, list | tuple):
@@ -2069,7 +2081,8 @@ def _write_evokeds(fname, evoked, check=True, *, on_mismatch="raise", overwrite=
             decal = np.zeros((e.info["nchan"], 1))
             for k in range(e.info["nchan"]):
                 decal[k] = 1.0 / (
-                    e.info["chs"][k]["cal"] * e.info["chs"][k].get("scale", 1.0)
+                    e.info["chs"][k]["cal"] *
+                    e.info["chs"][k].get("scale", 1.0)
                 )
 
             if np.iscomplexobj(e.data):
@@ -2159,7 +2172,8 @@ def _get_peak(data, times, tmin=None, tmax=None, mode="abs", *, strict=True):
             )
         maxfun = np.argmin
 
-    masked_index = np.ma.array(np.abs(data) if mode == "abs" else data, mask=mask)
+    masked_index = np.ma.array(
+        np.abs(data) if mode == "abs" else data, mask=mask)
 
     max_loc, max_time = np.unravel_index(maxfun(masked_index), data.shape)
 
