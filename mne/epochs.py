@@ -1934,7 +1934,8 @@ class BaseEpochs(
             when possible when ``copy=False``.
         """
         return self._get_data(
-            picks=picks, item=item, units=units, tmin=tmin, tmax=tmax, copy=copy, exclude=exclude
+            picks=picks, item=item, units=units, tmin=tmin, tmax=tmax, copy=copy,
+            exclude=exclude
         )
 
     @verbose
