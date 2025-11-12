@@ -1404,6 +1404,25 @@ docdict["events_epochstfr"] = _events_template.format(
     spaced sample numbers with a step size of ``len(times)``.""",
 )
 
+docdict["exclude"] = """
+exclude : list | str | 'bads'
+    Channels to exclude from the data when loading or processing.
+
+    Can be one of the following:
+        - **'bads'** (default): Automatically excludes the channels marked as
+          bad in the data object (e.g., in ``info['bads']``).
+        - **list**: An explicit list of channel names to be excluded.
+        - **str**: Can be used to specify a channel type or pattern
+          (e.g., ``'EEG'`` or ``'MEG'``) that will be interpreted according
+          to the channel selection rules of the function.
+
+    This parameter is useful for controlling which channels are removed before
+    returning the data. To include all channels, even those marked as bad,
+    set ``exclude=[]``.
+
+    .. versionadded:: 1.7
+"""
+
 docdict["evoked_by_event_type_returns"] = """
 evoked : instance of Evoked | list of Evoked
     The averaged epochs.
