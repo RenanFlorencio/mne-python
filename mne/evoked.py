@@ -237,6 +237,7 @@ class Evoked(
         Parameters
         ----------
         %(picks_all)s
+        %(exclude)s
         %(units)s
         tmin : float | None
             Start time of data to get in seconds.
