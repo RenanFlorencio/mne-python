@@ -932,6 +932,7 @@ class BaseRaw(
             ignored if the ``stop`` parameter is defined.
 
             .. versionadded:: 0.24.0
+        %(exclude)s
         %(verbose)s
 
         Returns

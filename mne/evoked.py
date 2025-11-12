@@ -127,6 +127,7 @@ class Evoked(
         generally not be loaded directly, but should first be processed using
         SSS/tSSS to remove the compensation signals that may also affect brain
         activity. Can also be ``"yes"`` to load without eliciting a warning.
+    %(exclude)s
     %(verbose)s
 
     Attributes

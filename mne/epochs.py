@@ -1625,6 +1625,7 @@ class BaseEpochs(
             Start time of data to get in seconds.
         tmax : int | float | None
             End time of data to get in seconds.
+        %(exclude)s
         %(verbose)s
         """
         from .io.base import _get_ch_factors
